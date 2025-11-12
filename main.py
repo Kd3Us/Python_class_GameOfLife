@@ -17,11 +17,23 @@ def count_neighbors(padded_frame, i, j):
     return neighbors
 
 def apply_rules(padded_frame):
-    """
-    Appliquer les règles du jeu de la vie
-    Retourne la nouvelle grille avec padding
-    """
-    pass
+    
+    rows, cols = padded_frame.shape
+    new_padded_frame = np.zeros_like(padded_frame)
+    
+    for i in range(1, rows - 1):
+        for j in range(1, cols - 1):
+            current_cell = padded_frame[i, j]
+            neighbors_count = count_neighbors(padded_frame, i, j)
+            
+            if current_cell == 0 and neighbors_count == 3:
+                new_padded_frame[i, j] = 1
+            elif current_cell == 1 and neighbors_count in [2, 3]:
+                new_padded_frame[i, j] = 1
+            else:
+                new_padded_frame[i, j] = 0
+    
+    return new_padded_frame
 
 def remove_padding(padded_frame):
     """
