@@ -8,10 +8,13 @@ def add_padding(frame):
     return padded_frame
 
 def count_neighbors(padded_frame, i, j):
-    """
-    Compter le nombre de voisins vivants autour de la cellule (i,j)
-    """
-    pass
+
+    neighbors = (
+        padded_frame[i-1, j-1] + padded_frame[i-1, j] + padded_frame[i-1, j+1] +
+        padded_frame[i, j-1]                         + padded_frame[i, j+1] +
+        padded_frame[i+1, j-1] + padded_frame[i+1, j] + padded_frame[i+1, j+1]
+    )
+    return neighbors
 
 def apply_rules(padded_frame):
     """
