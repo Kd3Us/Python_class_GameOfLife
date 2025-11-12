@@ -1,11 +1,11 @@
 import numpy as np
 
 def add_padding(frame):
-    """
-    Ajouter une bordure de zéros autour de la grille
-    Transformer une grille 7x7 en grille 9x9
-    """
-    pass
+    
+    rows, cols = frame.shape
+    padded_frame = np.zeros((rows + 2, cols + 2), dtype=int)
+    padded_frame[1:rows+1, 1:cols+1] = frame
+    return padded_frame
 
 def count_neighbors(padded_frame, i, j):
     """
