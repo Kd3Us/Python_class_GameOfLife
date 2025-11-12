@@ -17,7 +17,7 @@ def count_neighbors(padded_frame, i, j):
     return neighbors
 
 def apply_rules(padded_frame):
-    
+
     rows, cols = padded_frame.shape
     new_padded_frame = np.zeros_like(padded_frame)
     
@@ -36,10 +36,7 @@ def apply_rules(padded_frame):
     return new_padded_frame
 
 def remove_padding(padded_frame):
-    """
-    Enlèver le padding pour retourner à la grille 7x7
-    """
-    pass
+    return padded_frame[1:-1, 1:-1]
 
 frame = np.array([
     [0, 0, 0, 0, 0, 0, 0],
