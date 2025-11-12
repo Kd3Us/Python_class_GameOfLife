@@ -50,3 +50,23 @@ frame = np.array([
 
 print("Grille initiale:")
 print(frame)
+
+generation = 0
+while True:
+    try:
+        input(f"\nAppuyez sur Entrée pour la génération {generation + 1} (Ctrl+C pour quitter)...")
+        
+        padded_frame = add_padding(frame)
+        new_padded_frame = apply_rules(padded_frame)
+        frame = remove_padding(new_padded_frame)
+        generation += 1
+        
+        print(f"Génération {generation}:")
+        print(frame)
+        
+        if np.sum(frame) == 0:
+            print("Simulation terminée!")
+            break
+    except KeyboardInterrupt:
+        print("\nSimulation arrêtée!")
+        break
