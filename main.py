@@ -28,9 +28,9 @@ def apply_rules(frame):
             neighbors_count = count_neighbors(frame, i, j)
             
             if current_cell == 0 and neighbors_count == 3:
-                new_frame[i, j] = 1  # Birth
+                new_frame[i, j] = 1
             elif current_cell == 1 and neighbors_count in [2, 3]:
-                new_frame[i, j] = 1  # Survival
+                new_frame[i, j] = 1
             else:
                 new_frame[i, j] = 0
 
