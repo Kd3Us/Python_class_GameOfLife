@@ -1,5 +1,15 @@
 import arcade
+import os
+import tkinter as tk
+from tkinter import simpledialog
+from groq import Groq
+import json
+import re
+from dotenv import load_dotenv
 from game_of_life import GameOfLife
+
+# Charger les variables d'environnement
+load_dotenv()
 
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
@@ -32,6 +42,10 @@ class GameOfLifeWindow(arcade.Window):
         
         self.mouse_pressed = False
         self.last_cell_pos = None
+        
+        # Groq client
+        self.groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        self.ai_mode = False
     
     def on_draw(self):
         self.clear()
@@ -118,6 +132,7 @@ class GameOfLifeWindow(arcade.Window):
             "SPACE: Play/Pause",
             "G: Toggle Grid", 
             "R/C: Clear",
+            "A: AI Pattern",
             "Drag: Paint cells"
         ]
         
@@ -151,6 +166,8 @@ class GameOfLifeWindow(arcade.Window):
             self.paused = True
         elif key == arcade.key.G:
             self.show_grid = not self.show_grid
+        elif key == arcade.key.A:
+            self._prompt_ai_pattern()
         elif key == arcade.key.ESCAPE:
             arcade.close_window()
     
@@ -177,6 +194,75 @@ class GameOfLifeWindow(arcade.Window):
             if current_cell != self.last_cell_pos:
                 self.game.grid[grid_y, grid_x] = 1
                 self.last_cell_pos = current_cell
+    
+    def _prompt_ai_pattern(self):
+        root = tk.Tk()
+        root.withdraw()
+        
+        user_input = simpledialog.askstring(
+            "AI Pattern Generator", 
+            "Décris le pattern que tu veux (ex: 'un crabe qui danse', 'une spirale', 'un coeur'):"
+        )
+        
+        root.destroy()
+        
+        if user_input:
+            self._generate_ai_pattern(user_input)
+    
+    def _generate_ai_pattern(self, description):
+        try:
+            prompt = f"""Tu es un expert en Conway's Game of Life créatif.
+
+                        TÂCHE: Créer un pattern pour "{description}" sur une grille 50x40.
+
+                        RÈGLES IMPORTANTES:
+                        - Pour les formes arrondies (rond, cercle, ovale), utilise des approximations géométriques
+                        - EXEMPLE de rond approximatif : place des cellules en carré avec des coins arrondis
+                        - EXEMPLE de cercle : utilise un octogone ou hexagone
+                        - Pour "rond", pense à un carré avec des diagonales coupées
+
+                        STRATÉGIE pour "{description}":
+                        - Si c'est arrondi → utilise des formes polygonales (hexagone, octogone)
+                        - Si c'est droit → utilise des lignes et carrés
+                        - Sois pratique, pas perfectionniste
+
+                        RÉPONSE OBLIGATOIRE: Tu DOIS répondre UNIQUEMENT avec ce JSON exact :
+
+                        {{"pattern": [[ligne, colonne], [ligne, colonne]]}}
+
+                        Coordonnées: lignes 0-39, colonnes 0-49."""
+            
+            completion = self.groq_client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.9,
+                max_tokens=1000
+            )
+            
+            response = completion.choices[0].message.content
+            self._apply_ai_pattern(response)
+            
+        except Exception as e:
+            print(f"Erreur API Groq : {e}")
+    
+    def _apply_ai_pattern(self, ai_response):
+        try:
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                pattern_data = json.loads(json_match.group())
+                
+                self.game.clear()
+                
+                for row, col in pattern_data["pattern"]:
+                    if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
+                        self.game.grid[row, col] = 1
+                        
+                print(f"Pattern appliqué : {len(pattern_data['pattern'])} cellules")
+            else:
+                print("Impossible d'extraire le pattern de la réponse")
+                
+        except Exception as e:
+            print(f"Erreur lors de l'application du pattern : {e}")
 
 def main():
     window = GameOfLifeWindow()
