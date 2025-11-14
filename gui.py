@@ -98,55 +98,71 @@ class GameOfLifeWindow(arcade.Window):
         self._draw_ui()
     
     def _draw_ui(self):
+        # Calculer les positions de la grille pour éviter les chevauchements
+        grid_start_x = self.offset_x
+        grid_end_x = self.offset_x + GRID_WIDTH * CELL_SIZE
+        grid_start_y = self.offset_y
+        grid_end_y = self.offset_y + GRID_HEIGHT * CELL_SIZE
+        
+        # Panneau d'informations en haut à droite (au-dessus de la grille)
+        info_x = SCREEN_WIDTH - 180
+        info_y = SCREEN_HEIGHT - 25
+        
         arcade.draw_rectangle_filled(
-            100, SCREEN_HEIGHT - 50, 180, 80, 
+            info_x + 70, info_y - 15, 140, 50, 
             (0, 0, 0, 120)
         )
         
+        # Génération
         arcade.draw_text(
             f"Generation: {self.game.generation}", 
-            11, SCREEN_HEIGHT - 29, 
-            (0, 0, 0), 16
+            info_x + 1, info_y - 1, 
+            (0, 0, 0), 12
         )
         arcade.draw_text(
             f"Generation: {self.game.generation}", 
-            10, SCREEN_HEIGHT - 30, 
-            TEXT_COLOR, 16
+            info_x, info_y, 
+            TEXT_COLOR, 12
         )
         
+        # Status
         status = "PAUSE" if self.paused else "RUNNING"
         status_color = TEXT_COLOR if self.paused else ACCENT_COLOR
         
         arcade.draw_text(
             f"Status: {status}", 
-            11, SCREEN_HEIGHT - 59, 
-            (0, 0, 0), 16
+            info_x + 1, info_y - 24, 
+            (0, 0, 0), 12
         )
         arcade.draw_text(
             f"Status: {status}", 
-            10, SCREEN_HEIGHT - 60, 
-            status_color, 16
+            info_x, info_y - 23, 
+            status_color, 12
         )
         
-        instructions = [
-            "SPACE: Play/Pause",
-            "G: Toggle Grid", 
-            "R/C: Clear",
-            "A: AI Pattern",
-            "Drag: Paint cells"
-        ]
+        # Instructions compactes en bas de l'écran
+        instruction_text = "SPACE: Play/Pause | G: Grid | R/C: Clear | A: AI | Drag: Paint"
         
-        for i, instruction in enumerate(instructions):
-            arcade.draw_text(
-                instruction, 
-                11, 21 + i * 20, 
-                (0, 0, 0), 11
-            )
-            arcade.draw_text(
-                instruction, 
-                10, 20 + i * 20, 
-                TEXT_COLOR, 11
-            )
+        # Centrer le texte en bas
+        text_x = 10
+        bottom_y = 8
+        
+        # Fond semi-transparent pour les instructions
+        arcade.draw_rectangle_filled(
+            SCREEN_WIDTH // 2, bottom_y + 8, SCREEN_WIDTH - 20, 20, 
+            (0, 0, 0, 100)
+        )
+        
+        arcade.draw_text(
+            instruction_text, 
+            text_x + 1, bottom_y + 1, 
+            (0, 0, 0), 10
+        )
+        arcade.draw_text(
+            instruction_text, 
+            text_x, bottom_y, 
+            TEXT_COLOR, 10
+        )
     
     def on_update(self, delta_time):
         if not self.paused:
