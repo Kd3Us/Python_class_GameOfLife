@@ -222,35 +222,40 @@ class GameOfLifeWindow(arcade.Window):
     def _generate_ai_pattern(self, description):
         try:
             prompt = f"""You are an expert in Conway's Game of Life and pixel art.
-                        TASK: Create a pixel art pattern for "{description}" on a 50x40 grid.
+TASK: Create a pixel art pattern for "{description}" on a 50x40 grid.
 
-                        PIXEL ART APPROACH:
-                        - Think like a pixel artist: each living cell = 1 black pixel
-                        - Simplify complex shapes into recognizable pixelated versions
-                        - Use sharp outlines and simple geometric forms
-                        - For curves: approximate with pixel stairs (aliasing)
+PIXEL ART APPROACH:
+- Think like a pixel artist: each living cell = 1 black pixel
+- Simplify complex shapes into recognizable pixelated versions
+- Use sharp outlines and simple geometric forms
+- For curves: approximate with pixel stairs (aliasing)
 
-                        PIXEL ART TECHNIQUES:
-                        - Circles → pixelated hexagons/octagons
-                        - Curves → stair-stepped broken lines
-                        - Fine details → simplified but recognizable shapes
-                        - Prioritize readability on a small grid
+PIXEL ART TECHNIQUES:
+- Circles → pixelated hexagons/octagons
+- Curves → stair-stepped broken lines
+- Fine details → simplified but recognizable shapes
+- Prioritize readability on a small grid
 
-                        STRATEGY for "{description}":
-                        - Identify main shapes to pixelate
-                        - Draw outlines first, then fill if necessary
-                        - Keep proportions but simplify details
-                        - Ensure the result is recognizable
+STRATEGY for "{description}":
+- Identify main shapes to pixelate
+- Draw outlines first, then fill if necessary
+- Keep proportions but simplify details
+- Ensure the result is recognizable
 
-                        MANDATORY RESPONSE: You MUST respond ONLY with this exact JSON:
-                        {{"pattern": [[row, column], [row, column]]}}
-                        Coordinates: rows 0-39, columns 0-49."""
+MANDATORY: Respond ONLY with valid JSON in this exact format:
+{{"pattern": [[row, column], [row, column], ...]}}
+
+Coordinates: rows 0-39, columns 0-49.
+Do not include any explanation, only the JSON object."""
             
             completion = self.groq_client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+                model="moonshotai/kimi-k2-instruct-0905",
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.9,
-                max_tokens=1000
+                temperature=0.6,
+                max_completion_tokens=4096,
+                top_p=1,
+                stream=False,
+                stop=None
             )
             
             response = completion.choices[0].message.content
@@ -265,22 +270,28 @@ class GameOfLifeWindow(arcade.Window):
             print(repr(ai_response))
             print("=== FIN RÉPONSE BRUTE ===")
 
-            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
-            if json_match:
-                pattern_data = json.loads(json_match.group())
-                
-                self.game.clear()
-                
-                for row, col in pattern_data["pattern"]:
-                    if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
-                        self.game.grid[row, col] = 1
-                        
-                print(f"Pattern appliqué : {len(pattern_data['pattern'])} cellules")
-            else:
-                print("Impossible d'extraire le pattern de la réponse")
+            # Essayer de parser directement le JSON
+            try:
+                pattern_data = json.loads(ai_response)
+            except json.JSONDecodeError:
+                # Si ça échoue, essayer d'extraire le JSON avec regex
+                json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+                if json_match:
+                    pattern_data = json.loads(json_match.group())
+                else:
+                    raise ValueError("Impossible d'extraire le JSON de la réponse")
+            
+            self.game.clear()
+            
+            for row, col in pattern_data["pattern"]:
+                if 0 <= row < GRID_HEIGHT and 0 <= col < GRID_WIDTH:
+                    self.game.grid[row, col] = 1
+                    
+            print(f"Pattern appliqué : {len(pattern_data['pattern'])} cellules")
                 
         except Exception as e:
             print(f"Erreur lors de l'application du pattern : {e}")
+            print(f"Réponse reçue : {ai_response}")
 
 def main():
     window = GameOfLifeWindow()
