@@ -98,13 +98,11 @@ class GameOfLifeWindow(arcade.Window):
         self._draw_ui()
     
     def _draw_ui(self):
-        # Calculer les positions de la grille pour éviter les chevauchements
         grid_start_x = self.offset_x
         grid_end_x = self.offset_x + GRID_WIDTH * CELL_SIZE
         grid_start_y = self.offset_y
         grid_end_y = self.offset_y + GRID_HEIGHT * CELL_SIZE
         
-        # Panneau d'informations en haut à droite (au-dessus de la grille)
         info_x = SCREEN_WIDTH - 180
         info_y = SCREEN_HEIGHT - 25
         
@@ -113,7 +111,6 @@ class GameOfLifeWindow(arcade.Window):
             (0, 0, 0, 120)
         )
         
-        # Génération
         arcade.draw_text(
             f"Generation: {self.game.generation}", 
             info_x + 1, info_y - 1, 
@@ -140,14 +137,11 @@ class GameOfLifeWindow(arcade.Window):
             status_color, 12
         )
         
-        # Instructions compactes en bas de l'écran
         instruction_text = "SPACE: Play/Pause | G: Grid | R/C: Clear | A: AI | Drag: Paint"
         
-        # Centrer le texte en bas
         text_x = 10
         bottom_y = 8
         
-        # Fond semi-transparent pour les instructions
         arcade.draw_rectangle_filled(
             SCREEN_WIDTH // 2, bottom_y + 8, SCREEN_WIDTH - 20, 20, 
             (0, 0, 0, 100)
@@ -227,26 +221,30 @@ class GameOfLifeWindow(arcade.Window):
     
     def _generate_ai_pattern(self, description):
         try:
-            prompt = f"""Tu es un expert en Conway's Game of Life créatif.
+            prompt = f"""You are an expert in Conway's Game of Life and pixel art.
+                        TASK: Create a pixel art pattern for "{description}" on a 50x40 grid.
 
-                        TÂCHE: Créer un pattern pour "{description}" sur une grille 50x40.
+                        PIXEL ART APPROACH:
+                        - Think like a pixel artist: each living cell = 1 black pixel
+                        - Simplify complex shapes into recognizable pixelated versions
+                        - Use sharp outlines and simple geometric forms
+                        - For curves: approximate with pixel stairs (aliasing)
 
-                        RÈGLES IMPORTANTES:
-                        - Pour les formes arrondies (rond, cercle, ovale), utilise des approximations géométriques
-                        - EXEMPLE de rond approximatif : place des cellules en carré avec des coins arrondis
-                        - EXEMPLE de cercle : utilise un octogone ou hexagone
-                        - Pour "rond", pense à un carré avec des diagonales coupées
+                        PIXEL ART TECHNIQUES:
+                        - Circles → pixelated hexagons/octagons
+                        - Curves → stair-stepped broken lines
+                        - Fine details → simplified but recognizable shapes
+                        - Prioritize readability on a small grid
 
-                        STRATÉGIE pour "{description}":
-                        - Si c'est arrondi → utilise des formes polygonales (hexagone, octogone)
-                        - Si c'est droit → utilise des lignes et carrés
-                        - Sois pratique, pas perfectionniste
+                        STRATEGY for "{description}":
+                        - Identify main shapes to pixelate
+                        - Draw outlines first, then fill if necessary
+                        - Keep proportions but simplify details
+                        - Ensure the result is recognizable
 
-                        RÉPONSE OBLIGATOIRE: Tu DOIS répondre UNIQUEMENT avec ce JSON exact :
-
-                        {{"pattern": [[ligne, colonne], [ligne, colonne]]}}
-
-                        Coordonnées: lignes 0-39, colonnes 0-49."""
+                        MANDATORY RESPONSE: You MUST respond ONLY with this exact JSON:
+                        {{"pattern": [[row, column], [row, column]]}}
+                        Coordinates: rows 0-39, columns 0-49."""
             
             completion = self.groq_client.chat.completions.create(
                 model="openai/gpt-oss-120b",
@@ -263,6 +261,10 @@ class GameOfLifeWindow(arcade.Window):
     
     def _apply_ai_pattern(self, ai_response):
         try:
+            print("=== RÉPONSE BRUTE DE L'API ===")
+            print(repr(ai_response))
+            print("=== FIN RÉPONSE BRUTE ===")
+
             json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
             if json_match:
                 pattern_data = json.loads(json_match.group())
